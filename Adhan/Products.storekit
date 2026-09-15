@@ -1,0 +1,87 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "86EE8FB8",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "8.99",
+      "familyShareable" : false,
+      "internalID" : "6807348680",
+      "localizations" : [
+        {
+          "description" : "Contribution pour encourager les futures mises à jour",
+          "displayName" : "Grand soutien",
+          "locale" : "fr"
+        }
+      ],
+      "productID" : "mlseclab.Adhan.tip.large.v2",
+      "referenceName" : "Grand Soutien v2",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "3.99",
+      "familyShareable" : false,
+      "internalID" : "6807347391",
+      "localizations" : [
+        {
+          "description" : "Contribution pour soutenir le développement d'Adhan.",
+          "displayName" : "Soutien régulier",
+          "locale" : "fr"
+        }
+      ],
+      "productID" : "mlseclab.Adhan.tip.medium.v2",
+      "referenceName" : "Moyen Soutien v2",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "1.99",
+      "familyShareable" : false,
+      "internalID" : "6807344521",
+      "localizations" : [
+        {
+          "description" : "Contribution pour aider au maintien de l'application",
+          "displayName" : "Petit soutien",
+          "locale" : "fr"
+        }
+      ],
+      "productID" : "mlseclab.Adhan.tip.small.v2",
+      "referenceName" : "Petit Soutien v2",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6807162580",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "P7G6DB2JKP",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 810231732.40076196,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 5,
+    "minor" : 0
+  }
+}

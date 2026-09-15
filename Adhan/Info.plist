@@ -25,22 +25,10 @@
             </array>
         </dict>
     </array>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-        <key>NSAllowsArbitraryLoadsForMedia</key>
-        <true/>
-        <key>NSAllowsArbitraryLoadsInWebContent</key>
-        <true/>
-    </dict>
-    <!-- Permissions indispensables pour la Qibla et la localisation -->
+    
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>AdhanApp a besoin de votre position pour calculer les horaires de prière précis et orienter la boussole de la Qibla vers La Mecque.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Votre position permet d'actualiser automatiquement les horaires de prière et la direction de la Qibla lors de vos déplacements.</string>
     
-    <!-- Permissions pour l'export des horaires au calendrier -->
     <key>NSCalendarsUsageDescription</key>
     <string>Permet d'ajouter automatiquement les 5 prières quotidiennes à votre calendrier Apple.</string>
     <key>NSCalendarsFullAccessUsageDescription</key>
@@ -48,17 +36,14 @@
     <key>NSCalendarsWriteOnlyAccessUsageDescription</key>
     <string>Permet d'ajouter les prières à votre calendrier.</string>
     
-    <!-- Permission pour le flash visuel / lampe torche -->
     <key>NSCameraUsageDescription</key>
     <string>Utilisé uniquement pour activer le flash lumineux lors des rappels de prière.</string>
     
     <key>UIBackgroundModes</key>
     <array>
         <string>audio</string>
-        <string>fetch</string>
-        <string>remote-notification</string>
-        <string>location</string>
     </array>
+    
     <key>UIFileSharingEnabled</key>
     <true/>
     <key>UIViewControllerBasedStatusBarAppearance</key>

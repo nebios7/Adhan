@@ -4,13 +4,7 @@
 //
 //  Fichier UNIQUE et autonome contenant : modèles, enums, managers,
 //  ViewModel, StoreKit et toutes les vues SwiftUI de l'application.
-//  Cible : iOS 18 à iOS 26+ — Conforme Swift 6 Concurrency & Zero Warning.
-//
-//  ⚠️ N'oubliez pas d'ajouter dans Info.plist :
-//     <key>UIBackgroundModes</key>
-//     <array>
-//         <string>audio</string>
-//     </array>
+//  Cible : iOS 17 à iOS 26+ — Conforme Swift 6 Concurrency & Zero Warning.
 //
 
 import SwiftUI
@@ -22,6 +16,7 @@ import Combine
 import EventKit
 import StoreKit
 import MapKit
+import WebKit
 
 // MARK: - ============================================================
 // MARK: - EXTENSIONS COULEURS
@@ -161,25 +156,25 @@ enum AdhanPlaybackDuration: String, CaseIterable, Identifiable, Codable {
 }
 
 enum FastingCategory: String, CaseIterable, Identifiable, Codable {
-    case ramadan       = "Ramadan"
+    case ramadan        = "Ramadan"
     case mondayThursday = "Lundi / Jeudi"
-    case whiteDays     = "Jours blancs (13-14-15 du mois lunaire)"
-    case none          = "Aucun jeûne aujourd'hui"
+    case whiteDays      = "Jours blancs (13-14-15 du mois lunaire)"
+    case none           = "Aucun jeûne aujourd'hui"
 
     var id: String { rawValue }
 }
 
 enum FlashPattern: String, CaseIterable, Identifiable, Codable {
-    case slow = "Lent"
-    case fast = "Rapide"
+    case slow   = "Lent"
+    case fast   = "Rapide"
     case pulsed = "Pulsé"
 
     var id: String { rawValue }
 
     var toggleInterval: TimeInterval {
         switch self {
-        case .slow: return 0.8
-        case .fast: return 0.2
+        case .slow:   return 0.8
+        case .fast:   return 0.2
         case .pulsed: return 0.4
         }
     }
@@ -187,24 +182,24 @@ enum FlashPattern: String, CaseIterable, Identifiable, Codable {
 
 enum AppColorScheme: String, CaseIterable, Identifiable, Codable {
     case automatic = "Automatique"
-    case light = "Clair"
-    case dark = "Sombre"
+    case light     = "Clair"
+    case dark      = "Sombre"
 
     var id: String { rawValue }
 
     var colorScheme: ColorScheme? {
         switch self {
         case .automatic: return nil
-        case .light: return .light
-        case .dark: return .dark
+        case .light:     return .light
+        case .dark:      return .dark
         }
     }
 }
 
 enum NotificationBannerStyle: String, CaseIterable, Identifiable, Codable {
     case persistent = "Persistante"
-    case temporary = "Temporaire"
-    case critical = "Critique"
+    case temporary  = "Temporaire"
+    case critical   = "Critique"
 
     var id: String { rawValue }
 
@@ -212,8 +207,8 @@ enum NotificationBannerStyle: String, CaseIterable, Identifiable, Codable {
     var interruptionLevel: UNNotificationInterruptionLevel {
         switch self {
         case .persistent: return .timeSensitive
-        case .temporary: return .active
-        case .critical: return .critical
+        case .temporary:  return .active
+        case .critical:   return .critical
         }
     }
 }
@@ -239,12 +234,21 @@ struct PrayerItem: Identifiable, Codable, Equatable {
 }
 
 struct CityPreset: Identifiable, Codable, Equatable, Hashable {
-    var id = UUID()
+    var id: UUID
     let name: String
     let country: String
     let latitude: Double
     let longitude: Double
     let timeZoneIdentifier: String
+
+    init(id: UUID = UUID(), name: String, country: String, latitude: Double, longitude: Double, timeZoneIdentifier: String) {
+        self.id = id
+        self.name = name
+        self.country = country
+        self.latitude = latitude
+        self.longitude = longitude
+        self.timeZoneIdentifier = timeZoneIdentifier
+    }
 
     static let defaults: [CityPreset] = [
         CityPreset(name: "Paris", country: "France", latitude: 48.8566, longitude: 2.3522, timeZoneIdentifier: "Europe/Paris"),
@@ -340,40 +344,104 @@ struct MemoNote: Identifiable, Codable, Equatable {
 // MARK: - PrayerSettings
 
 struct PrayerSettings: Codable, Equatable {
-    var calculationMethod: CalculationMethod = .mwl
-    var asrMethod: AsrJuristicMethod = .standard
-    var customFajrAngle: Double = 18.0
-    var customIshaAngle: Double = 17.0
-    var hijriDayOffset: Int = 0
-    var defaultNotificationMode: NotificationMode = .adhan
-    var reminderMinutesBeforePrayer: Int = 10
-    var fajrProgressiveAlarmEnabled: Bool = true
-    var fajrProgressiveAlarmMinutesBefore: Int = 20
-    var fridayKahfReminderEnabled: Bool = true
-    var fastingEveReminderEnabled: Bool = true
-    var respectDoNotDisturb: Bool = true
-    var globalPlaybackDuration: AdhanPlaybackDuration = .full
-    var backgroundFullAdhanEnabled: Bool = true   // ← activé par défaut
-    var adhanVolume: Double = 1.0
-    var selectedCity: CityPreset = CityPreset.defaults[0]
-    var defaultAudioTrackID: UUID? = nil
+    var calculationMethod: CalculationMethod
+    var asrMethod: AsrJuristicMethod
+    var customFajrAngle: Double
+    var customIshaAngle: Double
+    var hijriDayOffset: Int
+    var defaultNotificationMode: NotificationMode
+    var reminderMinutesBeforePrayer: Int
+    var fajrProgressiveAlarmEnabled: Bool
+    var fajrProgressiveAlarmMinutesBefore: Int
+    var fridayKahfReminderEnabled: Bool
+    var fastingEveReminderEnabled: Bool
+    var respectDoNotDisturb: Bool
+    var globalPlaybackDuration: AdhanPlaybackDuration
+    var adhanVolume: Double
+    var selectedCity: CityPreset
+    var defaultAudioTrackID: UUID?
 
-    var followCurrentLocation: Bool = false
-    var preferredColorScheme: AppColorScheme = .automatic
-    var exportToCalendarEnabled: Bool = false
-    var enabledIslamicEventReminders: [String: Bool] = [:]
-    var reminderSoundTrackID: UUID? = nil
-    var forceAudioEvenInSilentMode: Bool = false
+    var followCurrentLocation: Bool
+    var preferredColorScheme: AppColorScheme
+    var exportToCalendarEnabled: Bool
+    var enabledIslamicEventReminders: [String: Bool]
+    var reminderSoundTrackID: UUID?
+    var forceAudioEvenInSilentMode: Bool
 
     // RAPPEL VISUEL (FLASH)
-    var flashEnabled: Bool = false
-    var flashDuration: Double = 5.0
-    var flashPattern: FlashPattern = .slow
+    var flashEnabled: Bool
+    var flashDuration: Double
+    var flashPattern: FlashPattern
 
     // NOTIFICATIONS AVANCÉES
-    var notificationSoundEnabled: Bool = true
-    var notificationBannerStyle: NotificationBannerStyle = .persistent
-    var notificationPreciseTime: Bool = true
+    var notificationSoundEnabled: Bool
+    var notificationBannerStyle: NotificationBannerStyle
+    var notificationPreciseTime: Bool
+
+    // MODES DE NOTIFICATION INDIVIDUELS PAR PRIÈRE
+    var prayerNotificationModes: [String: NotificationMode]
+
+    init(
+        calculationMethod: CalculationMethod = .mwl,
+        asrMethod: AsrJuristicMethod = .standard,
+        customFajrAngle: Double = 18.0,
+        customIshaAngle: Double = 17.0,
+        hijriDayOffset: Int = 0,
+        defaultNotificationMode: NotificationMode = .adhan,
+        reminderMinutesBeforePrayer: Int = 10,
+        fajrProgressiveAlarmEnabled: Bool = true,
+        fajrProgressiveAlarmMinutesBefore: Int = 20,
+        fridayKahfReminderEnabled: Bool = true,
+        fastingEveReminderEnabled: Bool = true,
+        respectDoNotDisturb: Bool = true,
+        globalPlaybackDuration: AdhanPlaybackDuration = .full,
+        adhanVolume: Double = 1.0,
+        selectedCity: CityPreset = CityPreset.defaults[0],
+        defaultAudioTrackID: UUID? = nil,
+        followCurrentLocation: Bool = false,
+        preferredColorScheme: AppColorScheme = .automatic,
+        exportToCalendarEnabled: Bool = false,
+        enabledIslamicEventReminders: [String: Bool] = [:],
+        reminderSoundTrackID: UUID? = nil,
+        forceAudioEvenInSilentMode: Bool = false,
+        flashEnabled: Bool = false,
+        flashDuration: Double = 5.0,
+        flashPattern: FlashPattern = .slow,
+        notificationSoundEnabled: Bool = true,
+        notificationBannerStyle: NotificationBannerStyle = .persistent,
+        notificationPreciseTime: Bool = true,
+        prayerNotificationModes: [String: NotificationMode] = [:]
+    ) {
+        self.calculationMethod = calculationMethod
+        self.asrMethod = asrMethod
+        self.customFajrAngle = customFajrAngle
+        self.customIshaAngle = customIshaAngle
+        self.hijriDayOffset = hijriDayOffset
+        self.defaultNotificationMode = defaultNotificationMode
+        self.reminderMinutesBeforePrayer = reminderMinutesBeforePrayer
+        self.fajrProgressiveAlarmEnabled = fajrProgressiveAlarmEnabled
+        self.fajrProgressiveAlarmMinutesBefore = fajrProgressiveAlarmMinutesBefore
+        self.fridayKahfReminderEnabled = fridayKahfReminderEnabled
+        self.fastingEveReminderEnabled = fastingEveReminderEnabled
+        self.respectDoNotDisturb = respectDoNotDisturb
+        self.globalPlaybackDuration = globalPlaybackDuration
+        self.adhanVolume = adhanVolume
+        self.selectedCity = selectedCity
+        self.defaultAudioTrackID = defaultAudioTrackID
+        self.followCurrentLocation = followCurrentLocation
+        self.preferredColorScheme = preferredColorScheme
+        self.exportToCalendarEnabled = exportToCalendarEnabled
+        self.enabledIslamicEventReminders = enabledIslamicEventReminders
+        self.reminderSoundTrackID = reminderSoundTrackID
+        self.forceAudioEvenInSilentMode = forceAudioEvenInSilentMode
+        self.flashEnabled = flashEnabled
+        self.flashDuration = flashDuration
+        self.flashPattern = flashPattern
+        self.notificationSoundEnabled = notificationSoundEnabled
+        self.notificationBannerStyle = notificationBannerStyle
+        self.notificationPreciseTime = notificationPreciseTime
+        self.prayerNotificationModes = prayerNotificationModes
+    }
 }
 
 // MARK: - ============================================================
@@ -442,7 +510,7 @@ final class StoreKitManager: ObservableObject {
 }
 
 // MARK: - ============================================================
-// MARK: - CALCULATEUR ASTRONOMIQUE (CORRECTION ASR)
+// MARK: - CALCULATEUR ASTRONOMIQUE
 // MARK: - ============================================================
 
 final class AstronomicalPrayerCalculator {
@@ -566,7 +634,7 @@ final class AstronomicalPrayerCalculator {
 }
 
 // MARK: - ============================================================
-// MARK: - GESTIONNAIRE COMBINÉ LOCALISATION & BOUSSOLE
+// MARK: - GESTIONNAIRE LOCALISATION & BOUSSOLE
 // MARK: - ============================================================
 
 @MainActor
@@ -576,7 +644,7 @@ final class LocationAndCompassManager: NSObject, ObservableObject, CLLocationMan
     @Published var currentLocation: CLLocation?
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var headingDegrees: Double = 0.0
-    @Published var smoothedHeadingDegrees: Double = 0.0   // nouveau
+    @Published var smoothedHeadingDegrees: Double = 0.0
     @Published var headingAccuracy: Double = -1.0
     @Published var isHeadingAvailable: Bool = false
     @Published var lastErrorMessage: String?
@@ -585,7 +653,7 @@ final class LocationAndCompassManager: NSObject, ObservableObject, CLLocationMan
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.headingFilter = 1.0   // moins de mises à jour, plus stable
+        manager.headingFilter = 1.0
         isHeadingAvailable = CLLocationManager.headingAvailable()
     }
 
@@ -628,8 +696,6 @@ final class LocationAndCompassManager: NSObject, ObservableObject, CLLocationMan
 
         Task { @MainActor in
             self.headingDegrees = raw
-
-            // Filtre exponentiel pour lisser (alpha = 0.15)
             let alpha = 0.15
             self.smoothedHeadingDegrees = self.smoothedHeadingDegrees * (1 - alpha) + raw * alpha
             self.headingAccuracy = newHeading.headingAccuracy
@@ -698,7 +764,7 @@ final class FlashLightManager {
         do {
             try device.lockForConfiguration()
             if on {
-                try device.setTorchModeOn(level: 1.0)
+                try device.setTorchModeOn(level: Float(1.0))
             } else {
                 device.torchMode = .off
             }
@@ -725,46 +791,15 @@ final class FlashLightManager {
 final class AudioPlayerManager: NSObject, ObservableObject {
 
     @Published var isPlayingFullAdhan: Bool = false
-    @Published var isBackgroundSessionActive: Bool = false
     @Published var library: [AudioTrack] = []
     @Published var onlinePresets: [OnlineAdhanPreset] = []
     @Published var downloadProgress: [UUID: Double] = [:]
     @Published var lastPlaybackError: String? = nil
 
     let flashManager = FlashLightManager()
+    private var player: AVAudioPlayer?
 
     var isFlashCurrentlyActive: Bool { flashManager.isActive }
-
-    func resolvedURL(for track: AudioTrack) -> URL? {
-        if track.isBuiltIn {
-            let name = (track.fileName as NSString).deletingPathExtension
-            let ext = (track.fileName as NSString).pathExtension
-            guard let bundleURL = Bundle.main.url(forResource: name, withExtension: ext) else {
-                lastPlaybackError = "Fichier « \(track.fileName) » introuvable dans le Bundle. Vérifie qu'il est bien ajouté au projet Xcode."
-                return nil
-            }
-            return bundleURL
-        } else {
-            let url = documentsAdhanFolder.appendingPathComponent(track.fileName)
-            guard FileManager.default.fileExists(atPath: url.path) else {
-                lastPlaybackError = "Fichier « \(track.fileName) » introuvable dans la bibliothèque locale."
-                return nil
-            }
-            return url
-        }
-    }
-
-    private var player: AVAudioPlayer?
-    private var keepAliveSilentPlayer: AVAudioPlayer?
-    private var watchdogTimer: Timer?
-    private var pendingFullAdhanDate: Date?
-    private var pendingPlaybackDuration: AdhanPlaybackDuration = .full
-    private var pendingVolume: Double = 1.0
-    private var pendingAudioURL: URL?
-    private var pendingFlashEnabled: Bool = false
-    private var pendingFlashDuration: Double = 5.0
-    private var pendingFlashPattern: FlashPattern = .slow
-    private var pendingMixWithOthers: Bool = false
 
     private let documentsAdhanFolder: URL = {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -779,122 +814,36 @@ final class AudioPlayerManager: NSObject, ObservableObject {
         seedBuiltInTrackIfNeeded()
     }
 
-    private func configurePlaybackSession(mixWithOthers: Bool = false) {
+    func resolvedURL(for track: AudioTrack) -> URL? {
+        if track.isBuiltIn {
+            let name = (track.fileName as NSString).deletingPathExtension
+            let ext = (track.fileName as NSString).pathExtension
+            guard let bundleURL = Bundle.main.url(forResource: name, withExtension: ext) else {
+                lastPlaybackError = "Fichier « \(track.fileName) » introuvable dans le Bundle."
+                return nil
+            }
+            return bundleURL
+        } else {
+            let url = documentsAdhanFolder.appendingPathComponent(track.fileName)
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                lastPlaybackError = "Fichier « \(track.fileName) » introuvable dans la bibliothèque locale."
+                return nil
+            }
+            return url
+        }
+    }
+
+    private func configurePlaybackSession() {
         do {
-            var options: AVAudioSession.CategoryOptions = []
-            if mixWithOthers { options.insert(.mixWithOthers) }
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: options)
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Erreur configuration AVAudioSession : \(error.localizedDescription)")
         }
     }
 
-    // Nouvelle version avec gestion des interruptions et son de fond non nul
-    func startBackgroundKeepAliveSession() {
-        guard !isBackgroundSessionActive else { return }
-
-        configurePlaybackSession(mixWithOthers: false)
-
-        if let silentURL = Self.makeSilentAudioFile(duration: 10.0, volume: 0.01) {
-            do {
-                keepAliveSilentPlayer = try AVAudioPlayer(contentsOf: silentURL)
-                keepAliveSilentPlayer?.numberOfLoops = -1
-                keepAliveSilentPlayer?.volume = 0.01   // volume non nul pour éviter suspension
-                keepAliveSilentPlayer?.prepareToPlay()
-                keepAliveSilentPlayer?.play()
-                isBackgroundSessionActive = true
-                startWatchdog()
-            } catch {
-                print("Erreur lecture silencieuse : \(error.localizedDescription)")
-            }
-        }
-
-        // Observateurs d'interruptions audio
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAudioSessionInterruption(_:)),
-            name: AVAudioSession.interruptionNotification,
-            object: AVAudioSession.sharedInstance()
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleAudioRouteChange(_:)),
-            name: AVAudioSession.routeChangeNotification,
-            object: AVAudioSession.sharedInstance()
-        )
-    }
-
-    func stopBackgroundKeepAliveSession() {
-        keepAliveSilentPlayer?.stop()
-        keepAliveSilentPlayer = nil
-        watchdogTimer?.invalidate()
-        watchdogTimer = nil
-        isBackgroundSessionActive = false
-        NotificationCenter.default.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: AVAudioSession.routeChangeNotification, object: nil)
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    }
-
-    @objc private func handleAudioSessionInterruption(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
-              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
-
-        if type == .ended {
-            // Reprendre la lecture silencieuse après interruption (appel, Siri…)
-            keepAliveSilentPlayer?.play()
-        }
-    }
-
-    @objc private func handleAudioRouteChange(_ notification: Notification) {
-        // Reprendre si la route change (ex: déconnexion casque)
-        keepAliveSilentPlayer?.play()
-    }
-
-    func scheduleFullAdhanTrigger(
-        at date: Date,
-        duration: AdhanPlaybackDuration,
-        volume: Double = 1.0,
-        flashEnabled: Bool = false,
-        flashDuration: Double = 5.0,
-        flashPattern: FlashPattern = .slow,
-        mixWithOthers: Bool = false,
-        audioURL: URL
-    ) {
-        pendingFullAdhanDate = date
-        pendingPlaybackDuration = duration
-        pendingVolume = volume
-        pendingFlashEnabled = flashEnabled
-        pendingFlashDuration = flashDuration
-        pendingFlashPattern = flashPattern
-        pendingMixWithOthers = mixWithOthers
-        pendingAudioURL = audioURL
-    }
-
-    private func startWatchdog() {
-        watchdogTimer?.invalidate()
-        watchdogTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self, let target = self.pendingFullAdhanDate, let url = self.pendingAudioURL else { return }
-            if Date() >= target {
-                self.pendingFullAdhanDate = nil
-                self.playFullAdhan(
-                    from: url,
-                    maxDuration: self.pendingPlaybackDuration,
-                    volume: self.pendingVolume,
-                    mixWithOthers: self.pendingMixWithOthers
-                )
-                if self.pendingFlashEnabled {
-                    self.flashManager.flash(duration: self.pendingFlashDuration, pattern: self.pendingFlashPattern)
-                }
-            }
-        }
-        RunLoop.main.add(watchdogTimer!, forMode: .common)
-    }
-
-    func playFullAdhan(from url: URL, maxDuration: AdhanPlaybackDuration, volume: Double = 1.0, mixWithOthers: Bool = false, respectDND: Bool = true) {
-        configurePlaybackSession(mixWithOthers: mixWithOthers)
+    func playFullAdhan(from url: URL, maxDuration: AdhanPlaybackDuration, volume: Double = 1.0) {
+        configurePlaybackSession()
         do {
             player = try AVAudioPlayer(contentsOf: url)
             player?.delegate = self
@@ -917,7 +866,7 @@ final class AudioPlayerManager: NSObject, ObservableObject {
     func testPlay(track: AudioTrack, volume: Double = 1.0) {
         lastPlaybackError = nil
         guard let url = resolvedURL(for: track) else { return }
-        playFullAdhan(from: url, maxDuration: .full, volume: volume, respectDND: false)
+        playFullAdhan(from: url, maxDuration: .full, volume: volume)
     }
 
     func stopPlayback() {
@@ -1020,47 +969,6 @@ final class AudioPlayerManager: NSObject, ObservableObject {
             library = decoded
         }
     }
-
-    // Fichier silencieux avec bruit très faible pour éviter suspension iOS
-    private static func makeSilentAudioFile(duration: TimeInterval = 10.0, volume: Float = 0.01) -> URL? {
-        let sampleRate = 44100.0
-        let frameCount = Int(sampleRate * duration)
-        var samples = [Int16](repeating: 0, count: frameCount)
-
-        // Léger bruit blanc (-50 à +50 sur 16 bits) pour garder l'audio actif
-        for i in 0..<frameCount {
-            samples[i] = Int16.random(in: -50...50)
-        }
-
-        var header = Data()
-        let dataSize = frameCount * 2
-        header.append(contentsOf: "RIFF".utf8)
-        header.append(contentsOf: UInt32(36 + dataSize).littleEndianBytes)
-        header.append(contentsOf: "WAVE".utf8)
-        header.append(contentsOf: "fmt ".utf8)
-        header.append(contentsOf: UInt32(16).littleEndianBytes)
-        header.append(contentsOf: UInt16(1).littleEndianBytes)   // PCM
-        header.append(contentsOf: UInt16(1).littleEndianBytes)   // mono
-        header.append(contentsOf: UInt32(sampleRate).littleEndianBytes)
-        header.append(contentsOf: UInt32(sampleRate * 2).littleEndianBytes)   // byte rate
-        header.append(contentsOf: UInt16(2).littleEndianBytes)   // block align
-        header.append(contentsOf: UInt16(16).littleEndianBytes)  // bits per sample
-        header.append(contentsOf: "data".utf8)
-        header.append(contentsOf: UInt32(dataSize).littleEndianBytes)
-
-        var fullData = header
-        samples.withUnsafeBufferPointer { buffer in
-            fullData.append(Data(buffer: buffer))
-        }
-
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("silent_keepalive.wav")
-        do {
-            try fullData.write(to: tempURL)
-            return tempURL
-        } catch {
-            return nil
-        }
-    }
 }
 
 extension AudioPlayerManager: AVAudioPlayerDelegate {
@@ -1072,19 +980,8 @@ extension AudioPlayerManager: AVAudioPlayerDelegate {
     }
 }
 
-private extension UInt32 {
-    var littleEndianBytes: [UInt8] {
-        withUnsafeBytes(of: self.littleEndian, Array.init)
-    }
-}
-private extension UInt16 {
-    var littleEndianBytes: [UInt8] {
-        withUnsafeBytes(of: self.littleEndian, Array.init)
-    }
-}
-
 // MARK: - ============================================================
-// MARK: - PRAYER VIEW MODEL (Orchestration Globale)
+// MARK: - PRAYER VIEW MODEL
 // MARK: - ============================================================
 
 @MainActor
@@ -1164,6 +1061,7 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
 
     // MARK: - Géocodage inverse
 
+   
     @MainActor
     func reverseGeocodeLocation(_ location: CLLocation) async {
         let lat = location.coordinate.latitude
@@ -1174,12 +1072,17 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
         var resolvedCountryName = ""
 
         let geocoder = CLGeocoder()
-        if let placemarks = try? await geocoder.reverseGeocodeLocation(location),
-           let placemark = placemarks.first {
-            resolvedCityName = placemark.locality ?? placemark.name ?? "Ma position"
-            resolvedCountryName = placemark.country ?? ""
+        do {
+            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            if let placemark = placemarks.first {
+                resolvedCityName = placemark.locality ?? placemark.name ?? "Ma position"
+                resolvedCountryName = placemark.country ?? ""
+            }
+        } catch {
+            print("Erreur géocodage inverse : \(error.localizedDescription)")
         }
 
+        // 🟢 Met à jour les coordonnées dans tous les cas pour recalculer les prières immédiatement
         self.settings.selectedCity = CityPreset(
             name: resolvedCityName,
             country: resolvedCountryName,
@@ -1227,9 +1130,14 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
             case .isha: time = output.isha
             }
             var item = PrayerItem(type: type, time: time)
-            item.notificationMode = settings.defaultNotificationMode
+
+            if let savedMode = settings.prayerNotificationModes[type.rawValue] {
+                item.notificationMode = savedMode
+            } else {
+                item.notificationMode = settings.defaultNotificationMode
+            }
+
             if let previous = previousModes[type] {
-                item.notificationMode = previous.notificationMode
                 item.manualOffsetMinutes = previous.manualOffsetMinutes
                 item.manualFixedTime = previous.manualFixedTime
                 item.assignedAudioTrackID = previous.assignedAudioTrackID
@@ -1317,23 +1225,6 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
             guard prayer.effectiveTime > Date() else { continue }
             scheduleAdvancedNotification(for: prayer)
             scheduleReminderBefore(prayer: prayer)
-
-            if prayer.notificationMode == .adhan {
-                let trackID = prayer.assignedAudioTrackID ?? settings.defaultAudioTrackID
-                let track = audioManager.library.first(where: { $0.id == trackID }) ?? audioManager.library.first
-                if let track, let url = audioManager.resolvedURL(for: track) {
-                    audioManager.scheduleFullAdhanTrigger(
-                        at: prayer.effectiveTime,
-                        duration: settings.globalPlaybackDuration,
-                        volume: settings.adhanVolume,
-                        flashEnabled: settings.flashEnabled,
-                        flashDuration: settings.flashDuration,
-                        flashPattern: settings.flashPattern,
-                        mixWithOthers: settings.forceAudioEvenInSilentMode,
-                        audioURL: url
-                    )
-                }
-            }
         }
 
         if settings.fajrProgressiveAlarmEnabled, let fajr = todayPrayers.first(where: { $0.type == .fajr }) {
@@ -1347,12 +1238,6 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
         }
         scheduleNawafilNotifications()
         scheduleIslamicEventReminders()
-
-        if settings.backgroundFullAdhanEnabled {
-            audioManager.startBackgroundKeepAliveSession()
-        } else {
-            audioManager.stopBackgroundKeepAliveSession()
-        }
     }
 
     private func scheduleAdvancedNotification(for prayer: PrayerItem) {
@@ -1469,7 +1354,8 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
                         : hijriMonth == 9
 
                     guard matches else { continue }
-                    guard let eveDate = Calendar.current.date(byAdding: .minute, value: -reminder.reminderMinutesBeforeImsak, to: Calendar.current.startOfDay(for: date)),
+                    let minutesBefore = reminder.reminderMinutesBeforeImsak
+                    guard let eveDate = Calendar.current.date(byAdding: .minute, value: -minutesBefore, to: Calendar.current.startOfDay(for: date)),
                           eveDate > Date() else { continue }
 
                     let triggerDate = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: eveDate)
@@ -1568,6 +1454,7 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
     func updateNotificationMode(for prayerType: PrayerType, mode: NotificationMode) {
         guard let index = todayPrayers.firstIndex(where: { $0.type == prayerType }) else { return }
         todayPrayers[index].notificationMode = mode
+        settings.prayerNotificationModes[prayerType.rawValue] = mode
         scheduleAllNotifications()
     }
 
@@ -1602,7 +1489,7 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
         return min(max(elapsed / total, 0), 1)
     }
 
-    // MARK: Export vers le Calendrier (EventKit)
+    // MARK: Export vers le Calendrier
 
     func exportPrayerTimesToCalendar(completion: @escaping (Bool, String?) -> Void) {
         let eventStore = EKEventStore()
@@ -1612,7 +1499,15 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
                 if #available(iOS 17.0, *) {
                     granted = try await eventStore.requestFullAccessToEvents()
                 } else {
-                    granted = try await eventStore.requestAccess(to: .event)
+                    granted = try await withCheckedThrowingContinuation { continuation in
+                        eventStore.requestAccess(to: .event) { success, error in
+                            if let error = error {
+                                continuation.resume(throwing: error)
+                            } else {
+                                continuation.resume(returning: success)
+                            }
+                        }
+                    }
                 }
                 guard granted else {
                     completion(false, "Accès au calendrier refusé. Vérifie Réglages > Confidentialité > Calendriers.")
@@ -1716,7 +1611,7 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
 
     // MARK: Sauvegarde / restauration
 
-    private struct BackupData: Codable {
+    struct BackupData: Codable {
         var settings: PrayerSettings
         var nawafilReminders: [NawafilReminder]
         var fastingReminders: [FastingReminder]
@@ -1737,7 +1632,7 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
         guard let data = try? JSONEncoder().encode(backup) else { return nil }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("adhanapp_backup.json")
         do {
-            try data.write(to: url, options: .atomic)
+            try data.write(to: url, options: Data.WritingOptions.atomic)
             return url
         } catch {
             return nil
@@ -1771,8 +1666,6 @@ final class PrayerViewModel: NSObject, ObservableObject, UNUserNotificationCente
 // MARK: - ============================================================
 // MARK: - VUES SWIFTUI
 // MARK: - ============================================================
-
-// MARK: ContentView (vue principale)
 
 struct ContentView: View {
     @StateObject private var viewModel = PrayerViewModel()
@@ -1975,6 +1868,7 @@ struct ContentView: View {
             quickAccessButton(title: "Nawafil", icon: "sparkles") { showNawafil = true }
             quickAccessButton(title: "Mémos", icon: "note.text") { showMemos = true }
             quickAccessButton(title: "Douaas", icon: "hands.sparkles.fill") { showDuaa = true }
+            quickAccessButton(title: "Sunnan", icon: "book.fill") { showSunna = true }
             quickAccessButton(title: "Dates clés", icon: "calendar.badge.clock") { showImportantDates = true }
             quickAccessButton(title: "Soutenir", icon: "heart.fill") { showSupport = true }
 
@@ -2016,11 +1910,94 @@ struct ContentView: View {
     }
 }
 
+// MARK: PrayerRow
+
+struct PrayerRow: View {
+    let prayer: PrayerItem
+    @ObservedObject var viewModel: PrayerViewModel
+
+    var body: some View {
+        HStack {
+            Image(systemName: prayer.type.systemImage)
+                .foregroundStyle(Color.adhanPrimary)
+                .frame(width: 28)
+
+            Text(prayer.type.rawValue)
+                .font(.body.weight(.medium))
+
+            Spacer()
+
+            Text(prayer.effectiveTime, style: .time)
+                .font(.body.monospacedDigit())
+                .foregroundStyle(.secondary)
+
+            if prayer.type.isActualPrayer {
+                Menu {
+                    ForEach(NotificationMode.allCases) { mode in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                viewModel.updateNotificationMode(for: prayer.type, mode: mode)
+                            }
+                        } label: {
+                            Label(mode.rawValue, systemImage: mode.systemImage)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: prayer.notificationMode.systemImage)
+                            .foregroundStyle(Color.adhanGold)
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.adhanGold.opacity(0.12))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal)
+        .contentShape(Rectangle())
+        .contextMenu {
+            if prayer.type.isActualPrayer {
+                Menu("Mode de sonnerie") {
+                    ForEach(NotificationMode.allCases) { mode in
+                        Button {
+                            viewModel.updateNotificationMode(for: prayer.type, mode: mode)
+                        } label: {
+                            Label(mode.rawValue, systemImage: mode.systemImage)
+                        }
+                    }
+                }
+                Menu("Décalage manuel") {
+                    ForEach([-10, -5, 0, 5, 10], id: \.self) { minutes in
+                        Button(minutes == 0 ? "Aucun décalage" : (minutes > 0 ? "+\(minutes) min" : "\(minutes) min")) {
+                            viewModel.setPrayerOffset(for: prayer.type, offset: minutes)
+                        }
+                    }
+                }
+                Menu("Rappel avant") {
+                    Button("Défaut (global)") { viewModel.setCustomReminder(for: prayer.type, minutes: nil) }
+                    ForEach([5, 10, 15, 20], id: \.self) { minutes in
+                        Button("\(minutes) min") { viewModel.setCustomReminder(for: prayer.type, minutes: minutes) }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: SupportSheet
 
 struct SupportSheet: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var store = StoreKitManager()
+    @State private var showPrivacyPolicy = false
+    @State private var showSupportPage = false
+    @State private var showTermsPage = false
 
     var body: some View {
         NavigationStack {
@@ -2071,6 +2048,97 @@ struct SupportSheet: View {
                             .foregroundStyle(Color.adhanPrimary)
                             .padding()
                     }
+
+                    VStack(spacing: 16) {
+                        Text("Besoin d'aide ?")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+
+                        Button {
+                            showSupportPage = true
+                        } label: {
+                            Label("Visiter la page Support", systemImage: "questionmark.circle.fill")
+                                .font(.body.weight(.medium))
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.adhanPrimary)
+                                .foregroundStyle(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            if let url = URL(string: "mailto:contact.abdessemed@gmail.com") {
+                                UIApplication.shared.open(url)
+                            }
+                        } label: {
+                            Label("Contacter le support", systemImage: "envelope.fill")
+                                .font(.body.weight(.medium))
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.cardBackground)
+                                .foregroundStyle(Color.adhanPrimary)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.adhanPrimary, lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 18).fill(Color.cardBackground))
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(.quaternary, lineWidth: 1))
+
+                    VStack(spacing: 12) {
+                        Text("Informations légales")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+
+                        Button {
+                            showPrivacyPolicy = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "hand.raised.fill")
+                                    .foregroundStyle(Color.adhanPrimary)
+                                    .frame(width: 28)
+                                Text("Politique de confidentialité")
+                                    .font(.body)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding()
+                            .background(Color.cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .buttonStyle(.plain)
+
+                        Divider()
+
+                        Button {
+                            showTermsPage = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "doc.text.fill")
+                                    .foregroundStyle(Color.adhanPrimary)
+                                    .frame(width: 28)
+                                Text("Conditions d'utilisation")
+                                    .font(.body)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding()
+                            .background(Color.cardBackground)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 18).fill(Color.cardBackground))
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(.quaternary, lineWidth: 1))
                 }
                 .padding()
             }
@@ -2080,6 +2148,15 @@ struct SupportSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fermer") { dismiss() }
                 }
+            }
+            .sheet(isPresented: $showPrivacyPolicy) {
+                LegalWebView(urlString: "https://nebios7.github.io/adhan-support/adhan-privacy.html", title: "Confidentialité")
+            }
+            .sheet(isPresented: $showSupportPage) {
+                LegalWebView(urlString: "https://nebios7.github.io/adhan-support/", title: "Support")
+            }
+            .sheet(isPresented: $showTermsPage) {
+                LegalWebView(urlString: "https://nebios7.github.io/adhan-support/adhan-terms.html", title: "Conditions")
             }
         }
     }
@@ -2122,57 +2199,100 @@ struct SupportSheet: View {
     }
 }
 
-// MARK: PrayerRow
+// MARK: LegalWebView
 
-struct PrayerRow: View {
-    let prayer: PrayerItem
-    @ObservedObject var viewModel: PrayerViewModel
+struct LegalWebView: View {
+    let urlString: String
+    let title: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var isLoading = true
+    @State private var loadError: String? = nil
 
     var body: some View {
-        HStack {
-            Image(systemName: prayer.type.systemImage)
-                .foregroundStyle(Color.adhanPrimary)
-                .frame(width: 28)
-            Text(prayer.type.rawValue)
-                .font(.body.weight(.medium))
-            Spacer()
-            Text(prayer.effectiveTime, style: .time)
-                .font(.body.monospacedDigit())
-                .foregroundStyle(.secondary)
-            if prayer.type.isActualPrayer {
-                Image(systemName: prayer.notificationMode.systemImage)
-                    .foregroundStyle(Color.adhanGold)
-                    .frame(width: 20)
+        NavigationStack {
+            VStack(spacing: 0) {
+                if let url = URL(string: urlString) {
+                    WebView(url: url, isLoading: $isLoading, loadError: $loadError)
+                        .overlay {
+                            if isLoading {
+                                ProgressView("Chargement…")
+                                    .padding()
+                                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.cardBackground))
+                            }
+                        }
+                } else {
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 40))
+                            .foregroundStyle(Color.softAlert)
+                        Text("URL invalide")
+                            .font(.headline)
+                        Text("Impossible de charger la page demandée.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                }
+
+                if let loadError {
+                    Text(loadError)
+                        .font(.caption)
+                        .foregroundStyle(Color.softAlert)
+                        .padding()
+                        .background(Color.softAlert.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.horizontal)
+                }
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fermer") { dismiss() }
+                }
             }
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal)
-        .contentShape(Rectangle())
-        .contextMenu {
-            if prayer.type.isActualPrayer {
-                Menu("Mode de sonnerie") {
-                    ForEach(NotificationMode.allCases) { mode in
-                        Button {
-                            viewModel.updateNotificationMode(for: prayer.type, mode: mode)
-                        } label: {
-                            Label(mode.rawValue, systemImage: mode.systemImage)
-                        }
-                    }
-                }
-                Menu("Décalage manuel") {
-                    ForEach([-10, -5, 0, 5, 10], id: \.self) { minutes in
-                        Button(minutes == 0 ? "Aucun décalage" : (minutes > 0 ? "+\(minutes) min" : "\(minutes) min")) {
-                            viewModel.setPrayerOffset(for: prayer.type, offset: minutes)
-                        }
-                    }
-                }
-                Menu("Rappel avant") {
-                    Button("Défaut (global)") { viewModel.setCustomReminder(for: prayer.type, minutes: nil) }
-                    ForEach([5, 10, 15, 20], id: \.self) { minutes in
-                        Button("\(minutes) min") { viewModel.setCustomReminder(for: prayer.type, minutes: minutes) }
-                    }
-                }
-            }
+    }
+}
+
+struct WebView: UIViewRepresentable {
+    let url: URL
+    @Binding var isLoading: Bool
+    @Binding var loadError: String?
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.navigationDelegate = context.coordinator
+        webView.load(URLRequest(url: url))
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    class Coordinator: NSObject, WKNavigationDelegate {
+        var parent: WebView
+
+        init(_ parent: WebView) {
+            self.parent = parent
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            parent.isLoading = false
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            parent.isLoading = false
+            parent.loadError = error.localizedDescription
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            parent.isLoading = false
+            parent.loadError = error.localizedDescription
         }
     }
 }
@@ -2182,7 +2302,6 @@ struct PrayerRow: View {
 struct SettingsSheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var vibrateTestTrigger = false
     @State private var backupURL: URL?
     @State private var showImportPicker = false
     @State private var importSucceeded = false
@@ -2241,7 +2360,7 @@ struct SettingsSheet: View {
                 } header: {
                     Text("Notifications")
                 } footer: {
-                    Text("Le type d'alerte (Adhan/Bip/Vibreur/Silencieux) se règle prière par prière dans la section Adhans. \"Son des notifications\" coupe le son pour toutes les prières si désactivé, même celles réglées sur Adhan ou Bip. Le style \"Critique\" nécessite une autorisation Apple spéciale que la plupart des comptes développeur n'ont pas : sans elle, iOS l'applique comme \"Temporaire\". iOS ne permet pas de piloter la vibration indépendamment du son via l'API publique de notifications — aucun toggle séparé n'est donc proposé ici pour ne pas laisser croire à un contrôle qui n'existe pas.")
+                    Text("Le type d'alerte (Adhan/Bip/Vibreur/Silencieux) se règle directement sur chaque prière dans la liste principale.")
                 }
 
                 Section {
@@ -2253,8 +2372,6 @@ struct SettingsSheet: View {
                     }
                 } header: {
                     Text("Apparence et localisation")
-                } footer: {
-                    Text("Recalcule automatiquement les horaires si tu te déplaces de plus de 2km, en te basant sur ta position GPS au lieu de la ville sélectionnée. Consomme plus de batterie que le mode ville fixe.")
                 }
 
                 Section {
@@ -2267,7 +2384,7 @@ struct SettingsSheet: View {
                     } label: {
                         Label("Exporter maintenant", systemImage: "calendar.badge.plus")
                     }
-                    ForEach(IslamicEvent.all, id: \.id) { event in
+                    ForEach(IslamicEvent.all) { event in
                         Toggle(event.name, isOn: Binding(
                             get: { viewModel.settings.enabledIslamicEventReminders[event.name, default: false] },
                             set: { newValue in
@@ -2282,8 +2399,6 @@ struct SettingsSheet: View {
                     }
                 } header: {
                     Text("Calendrier et dates clés")
-                } footer: {
-                    Text("Ajoute les horaires du jour comme événements dans ton calendrier par défaut (15 min de durée chacun). Nécessite l'autorisation d'accès au calendrier.")
                 }
 
                 Section {
@@ -2295,8 +2410,6 @@ struct SettingsSheet: View {
                     }
                 } header: {
                     Text("Son personnalisé pour les rappels")
-                } footer: {
-                    Text("S'applique aux rappels avant prière. Seules les pistes intégrées au Bundle apparaissent ici : iOS n'autorise pas les fichiers importés comme son de notification.")
                 }
 
                 Section {
@@ -2310,15 +2423,15 @@ struct SettingsSheet: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        Button("Tester le flash") {
+                            viewModel.triggerFlashTest()
+                        }
                     }
                 } header: {
                     Text("Rappel visuel (flash)")
-                } footer: {
-                    Text("Fait clignoter la torche du téléphone au moment de l'Adhan complet. Ne fonctionne pas dans le Simulateur (pas de torche) ni sur les appareils sans lampe. Coupe automatiquement à la fin de la durée choisie.")
                 }
 
                 Section {
-                    Toggle("Adhan complet en arrière-plan", isOn: $viewModel.settings.backgroundFullAdhanEnabled)
                     Picker("Durée de lecture", selection: $viewModel.settings.globalPlaybackDuration) {
                         ForEach(AdhanPlaybackDuration.allCases) { duration in
                             Text(duration.rawValue).tag(duration)
@@ -2329,100 +2442,51 @@ struct SettingsSheet: View {
                         Slider(value: $viewModel.settings.adhanVolume, in: 0...1)
                         Image(systemName: "speaker.wave.3.fill")
                     }
-                    Toggle("Respecter Ne pas déranger", isOn: $viewModel.settings.respectDoNotDisturb)
-                    Toggle("Forcer la lecture même en mode silencieux", isOn: $viewModel.settings.forceAudioEvenInSilentMode)
                 } header: {
-                    Text("Audio en arrière-plan")
-                } footer: {
-                    Text("⚠️ Cette option maintient une session audio active en continu pour garantir la lecture de l'Adhan complet même lorsque l'app est fermée. Cela augmente la consommation batterie de façon mesurable. Un son de secours de 30s reste toujours programmé indépendamment, même si cette option est désactivée. La catégorie audio utilisée fait déjà systématiquement passer outre le mode silencieux par défaut — \"Forcer\" n'autorise en plus que le mixage avec d'autres apps audio plutôt que de les couper.")
+                    Text("Réglages Audio")
                 }
 
-                Section {
-                    Button {
-                        if let trackID = viewModel.settings.defaultAudioTrackID,
-                           let track = viewModel.audioManager.library.first(where: { $0.id == trackID }) {
-                            viewModel.audioManager.testPlay(track: track, volume: viewModel.settings.adhanVolume)
-                        } else if let firstTrack = viewModel.audioManager.library.first {
-                            viewModel.audioManager.testPlay(track: firstTrack, volume: viewModel.settings.adhanVolume)
-                        }
-                    } label: {
-                        Label("Tester Adhan", systemImage: NotificationMode.adhan.systemImage)
-                    }
-                    Button {
-                        viewModel.audioManager.testBeep()
-                    } label: {
-                        Label("Tester Bip", systemImage: NotificationMode.beep.systemImage)
-                    }
-                    Button {
-                        vibrateTestTrigger.toggle()
-                    } label: {
-                        Label("Tester Vibreur", systemImage: NotificationMode.vibrate.systemImage)
-                    }
-                    .sensoryFeedback(.warning, trigger: vibrateTestTrigger)
-                    Button {
-                        viewModel.triggerFlashTest()
-                    } label: {
-                        Label(
-                            viewModel.audioManager.isFlashCurrentlyActive ? "Éteindre le flash" : "Tester le flash",
-                            systemImage: viewModel.audioManager.isFlashCurrentlyActive ? "flashlight.off.fill" : "flashlight.on.fill"
-                        )
-                        .foregroundStyle(viewModel.audioManager.isFlashCurrentlyActive ? Color.softAlert : Color.adhanPrimary)
-                    }
-                } header: {
-                    Text("Tester les sonneries et le flash")
-                }
-
-                Section("À propos") {
-                    LabeledContent("Adhan", value: "v1.0")
-                    Text("Développée avec SwiftUI. Crédits : dev : ABDESSEMED Mohamed, Batna.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-
-                Section {
-                    if let backupURL {
-                        ShareLink(item: backupURL) {
-                            Label("Partager le fichier de sauvegarde", systemImage: "square.and.arrow.up")
+                Section("Sauvegarde et restauration") {
+                    if let url = backupURL {
+                        ShareLink(item: url) {
+                            Label("Partager la sauvegarde JSON", systemImage: "square.and.arrow.up")
                         }
                     } else {
-                        Button {
+                        Button("Générer un fichier de sauvegarde") {
                             backupURL = viewModel.exportBackupFile()
-                        } label: {
-                            Label("Exporter mes réglages", systemImage: "arrow.down.doc")
                         }
                     }
-                    Button {
+
+                    Button("Importer une sauvegarde") {
                         showImportPicker = true
-                    } label: {
-                        Label("Importer une sauvegarde", systemImage: "arrow.up.doc")
                     }
-                } header: {
-                    Text("Sauvegarde")
-                } footer: {
-                    Text("Inclut réglages, Nawafil, jeûnes, mémos, douaas et villes personnalisées. N'inclut pas les fichiers audio importés.")
                 }
             }
             .navigationTitle("Réglages")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
+                    Button("OK") { dismiss() }
                 }
             }
+            .alert("Export Calendrier", isPresented: $showCalendarExportAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(calendarExportMessage)
+            }
             .fileImporter(isPresented: $showImportPicker, allowedContentTypes: [.json]) { result in
-                if case .success(let url) = result {
+                switch result {
+                case .success(let url):
                     importSucceeded = viewModel.importBackupFile(from: url)
+                    showImportResultAlert = true
+                case .failure:
+                    importSucceeded = false
                     showImportResultAlert = true
                 }
             }
-            .alert(importSucceeded ? "Sauvegarde restaurée" : "Échec de l'import", isPresented: $showImportResultAlert) {
-                Button("OK", role: .cancel) { }
+            .alert("Restauration", isPresented: $showImportResultAlert) {
+                Button("OK", role: .cancel) {}
             } message: {
-                Text(importSucceeded ? "Tes réglages ont été restaurés avec succès." : "Le fichier sélectionné n'est pas une sauvegarde valide.")
-            }
-            .alert("Export calendrier", isPresented: $showCalendarExportAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(calendarExportMessage)
+                Text(importSucceeded ? "Les données ont été restaurées avec succès." : "Échec de la restauration du fichier.")
             }
         }
     }
@@ -2433,163 +2497,87 @@ struct SettingsSheet: View {
 struct AudioSheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var showFileImporter = false
-    @State private var showRenameFor: AudioTrack? = nil
-    @State private var renameText: String = ""
+    @State private var showDocumentPicker = false
+    @State private var newTrackName = ""
+    @State private var trackToRename: AudioTrack? = nil
+    @State private var showRenameAlert = false
 
     var body: some View {
         NavigationStack {
             List {
-                Section {
+                Section("Adhan principal") {
+                    Picker("Récitateur par défaut", selection: $viewModel.settings.defaultAudioTrackID) {
+                        Text("Premier de la liste").tag(UUID?.none)
+                        ForEach(viewModel.audioManager.library) { track in
+                            Text(track.displayName).tag(Optional(track.id))
+                        }
+                    }
+                }
+
+                Section("Bibliothèque locale") {
                     ForEach(viewModel.audioManager.library) { track in
                         HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(track.displayName)
-                                if track.isBuiltIn {
-                                    Text("Intégré").font(.caption2).foregroundStyle(.secondary)
-                                }
+                            VStack(alignment: .leading) {
+                                Text(track.displayName).font(.body.weight(.medium))
+                                Text(track.isBuiltIn ? "Intégré" : "Importé").font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
-                            if viewModel.audioManager.isPlayingFullAdhan {
-                                Button {
-                                    viewModel.audioManager.stopPlayback()
-                                } label: {
-                                    Image(systemName: "stop.circle.fill")
-                                        .foregroundStyle(Color.softAlert)
-                                }
-                            } else {
-                                Button {
-                                    viewModel.audioManager.testPlay(track: track)
-                                } label: {
-                                    Image(systemName: "play.circle.fill")
-                                        .foregroundStyle(Color.adhanPrimary)
-                                }
-                            }
-                        }
-                        .contextMenu {
                             Button {
-                                renameText = track.displayName
-                                showRenameFor = track
+                                viewModel.audioManager.testPlay(track: track, volume: viewModel.settings.adhanVolume)
                             } label: {
-                                Label("Renommer", systemImage: "pencil")
+                                Image(systemName: "play.circle.fill").font(.title2).foregroundStyle(Color.adhanPrimary)
                             }
+                            .buttonStyle(.plain)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             if !track.isBuiltIn {
                                 Button(role: .destructive) {
                                     viewModel.audioManager.deleteTrack(track)
                                 } label: {
                                     Label("Supprimer", systemImage: "trash")
                                 }
-                            }
-                        }
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            let track = viewModel.audioManager.library[index]
-                            if !track.isBuiltIn {
-                                viewModel.audioManager.deleteTrack(track)
-                            }
-                        }
-                    }
-                } header: {
-                    Text("Bibliothèque locale")
-                } footer: {
-                    Text("Le test joue le fichier en entier (pas la version tronquée à 30s utilisée pour les notifications système).")
-                }
-
-                Section {
-                    ForEach(PrayerType.allCases.filter { $0.isActualPrayer }) { type in
-                        if let index = viewModel.todayPrayers.firstIndex(where: { $0.type == type }) {
-                            Picker(type.rawValue, selection: Binding(
-                                get: { viewModel.todayPrayers[index].notificationMode },
-                                set: { newMode in
-                                    viewModel.updateNotificationMode(for: type, mode: newMode)
+                                Button {
+                                    trackToRename = track
+                                    newTrackName = track.displayName
+                                    showRenameAlert = true
+                                } label: {
+                                    Label("Renommer", systemImage: "pencil")
                                 }
-                            )) {
-                                ForEach(NotificationMode.allCases) { mode in
-                                    Label(mode.rawValue, systemImage: mode.systemImage).tag(mode)
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    Text("Mode de sonnerie par prière")
-                } footer: {
-                    Text("Adhan = son complet configurable ci-dessous. Bip = son court. Vibreur = vibration seule. Silencieux = aucune alerte.")
-                }
-
-                Section("Assigner un Adhan par prière") {
-                    ForEach(PrayerType.allCases.filter { $0.isActualPrayer }) { type in
-                        if let index = viewModel.todayPrayers.firstIndex(where: { $0.type == type }) {
-                            Picker(type.rawValue, selection: Binding(
-                                get: { viewModel.todayPrayers[index].assignedAudioTrackID },
-                                set: { newValue in
-                                    viewModel.todayPrayers[index].assignedAudioTrackID = newValue
-                                    viewModel.scheduleAllNotifications()
-                                }
-                            )) {
-                                Text("Adhan par défaut").tag(UUID?.none)
-                                ForEach(viewModel.audioManager.library) { track in
-                                    Text(track.displayName).tag(Optional(track.id))
-                                }
+                                .tint(.orange)
                             }
                         }
                     }
                 }
 
-                Section("Préréglages en ligne") {
-                    if viewModel.audioManager.onlinePresets.isEmpty {
-                        Text("Aucune source configurée pour le moment.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.audioManager.onlinePresets) { preset in
-                            HStack {
-                                Text(preset.displayName)
-                                Spacer()
-                                Button("Télécharger") {
-                                    viewModel.audioManager.downloadOnlinePreset(preset) { _ in }
-                                }
-                            }
-                        }
-                    }
-                }
                 Section {
                     Button {
-                        showFileImporter = true
+                        showDocumentPicker = true
                     } label: {
-                        Label("Importer depuis l'iPhone", systemImage: "square.and.arrow.down")
+                        Label("Importer un fichier audio (MP3/M4A)", systemImage: "doc.badge.plus")
                     }
                 }
             }
-            .navigationTitle("Adhans")
+            .navigationTitle("Bibliothèque Adhans")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
-            }
-            .fileImporter(isPresented: $showFileImporter, allowedContentTypes: [.audio]) { result in
-                if case .success(let url) = result {
-                    viewModel.audioManager.importAudioFile(from: url, displayName: url.lastPathComponent)
-                }
-            }
-            .alert("Lecture impossible", isPresented: Binding(
-                get: { viewModel.audioManager.lastPlaybackError != nil },
-                set: { if !$0 { viewModel.audioManager.lastPlaybackError = nil } }
-            )) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.audioManager.lastPlaybackError ?? "")
-            }
-            .alert("Renommer", isPresented: Binding(
-                get: { showRenameFor != nil },
-                set: { if !$0 { showRenameFor = nil } }
-            )) {
-                TextField("Nom", text: $renameText)
-                Button("Annuler", role: .cancel) { showRenameFor = nil }
-                Button("Enregistrer") {
-                    if let track = showRenameFor {
-                        viewModel.audioManager.renameTrack(track, to: renameText)
+                    Button("Fermer") {
+                        viewModel.audioManager.stopPlayback()
+                        dismiss()
                     }
-                    showRenameFor = nil
+                }
+            }
+            .fileImporter(isPresented: $showDocumentPicker, allowedContentTypes: [.audio]) { result in
+                if case .success(let url) = result {
+                    viewModel.audioManager.importAudioFile(from: url, displayName: url.deletingPathExtension().lastPathComponent)
+                }
+            }
+            .alert("Renommer la piste", isPresented: $showRenameAlert) {
+                TextField("Nouveau nom", text: $newTrackName)
+                Button("Annuler", role: .cancel) {}
+                Button("Enregistrer") {
+                    if let track = trackToRename {
+                        viewModel.audioManager.renameTrack(track, to: newTrackName)
+                    }
                 }
             }
         }
@@ -2602,478 +2590,147 @@ struct CitySheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
-    @State private var showCustomCityForm = false
-    @State private var customName = ""
-    @State private var customLatitude = ""
-    @State private var customLongitude = ""
-    @State private var customTimeZone = TimeZone.current.identifier
-    @State private var isLocating = false
-    @State private var locationErrorMessage: String?
-    @State private var geocodingTask: Task<Void, Never>?
+    @State private var showAddCityAlert = false
+    @State private var newCityName = ""
+    @State private var newCityCountry = ""
+    @State private var newCityLat = ""
+    @State private var newCityLon = ""
 
-    var filtered: [CityPreset] {
-        let all = CityPreset.defaults + viewModel.customCities
-        return searchText.isEmpty ? all : all.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    var allCities: [CityPreset] {
+        CityPreset.defaults + viewModel.customCities
+    }
+
+    var filteredCities: [CityPreset] {
+        if searchText.isEmpty { return allCities }
+        return allCities.filter { $0.name.localizedCaseInsensitiveContains(searchText) || $0.country.localizedCaseInsensitiveContains(searchText) }
     }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    Button {
-                        useCurrentLocation()
-                    } label: {
-                        HStack {
-                            Image(systemName: "location.fill")
-                            Text(isLocating ? "Localisation en cours…" : "Utiliser ma position actuelle")
-                            if isLocating {
-                                Spacer()
-                                ProgressView()
-                            }
-                        }
-                    }
-                    .disabled(isLocating)
-                    if let locationErrorMessage {
-                        Text(locationErrorMessage)
-                            .font(.caption)
-                            .foregroundStyle(Color.softAlert)
-                    }
+                    Toggle("Suivre ma position GPS", isOn: $viewModel.settings.followCurrentLocation)
                 }
 
                 Section("Villes") {
-                    ForEach(filtered) { city in
-                        Button {
-                            viewModel.settings.selectedCity = city
-                            dismiss()
-                        } label: {
+                    ForEach(filteredCities) { city in
+                        HStack {
                             VStack(alignment: .leading) {
-                                Text(city.name).font(.body)
+                                Text(city.name).font(.body.weight(.medium))
                                 Text(city.country).font(.caption).foregroundStyle(.secondary)
                             }
+                            Spacer()
+                            if viewModel.settings.selectedCity == city && !viewModel.settings.followCurrentLocation {
+                                Image(systemName: "checkmark").foregroundStyle(Color.adhanPrimary)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            viewModel.settings.followCurrentLocation = false
+                            viewModel.settings.selectedCity = city
+                            dismiss()
                         }
                     }
-                    .onDelete { indexSet in
-                        let customIndexes = indexSet.filter { $0 >= CityPreset.defaults.count && searchText.isEmpty }
-                        let offsets = IndexSet(customIndexes.map { $0 - CityPreset.defaults.count })
-                        guard !offsets.isEmpty else { return }
-                        viewModel.customCities.remove(atOffsets: offsets)
+                }
+            }
+            .searchable(text: $searchText, prompt: "Chercher une ville...")
+            .navigationTitle("Sélection de la ville")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showAddCityAlert = true } label: { Image(systemName: "plus") }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("OK") { dismiss() }
+                }
+            }
+            .alert("Ajouter une ville", isPresented: $showAddCityAlert) {
+                TextField("Nom (ex: Lille)", text: $newCityName)
+                TextField("Pays (ex: France)", text: $newCityCountry)
+                TextField("Latitude (ex: 50.6292)", text: $newCityLat)
+                TextField("Longitude (ex: 3.0573)", text: $newCityLon)
+                Button("Annuler", role: .cancel) {}
+                Button("Ajouter") {
+                    if let lat = Double(newCityLat), let lon = Double(newCityLon), !newCityName.isEmpty {
+                        let city = CityPreset(name: newCityName, country: newCityCountry, latitude: lat, longitude: lon, timeZoneIdentifier: TimeZone.current.identifier)
+                        viewModel.customCities.append(city)
                         viewModel.saveCustomCities()
                     }
                 }
-
-                Section {
-                    if showCustomCityForm {
-                        TextField("Nom de la ville", text: $customName)
-                        TextField("Latitude (ex: 35.5559)", text: $customLatitude)
-                            .keyboardType(.numbersAndPunctuation)
-                        TextField("Longitude (ex: 6.1741)", text: $customLongitude)
-                            .keyboardType(.numbersAndPunctuation)
-                        TextField("Fuseau horaire (ex: Africa/Algiers)", text: $customTimeZone)
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.never)
-                        Button("Ajouter cette ville") {
-                            addCustomCity()
-                        }
-                    } else {
-                        Button("Ajouter une ville manuellement") {
-                            showCustomCityForm = true
-                        }
-                    }
-                } header: {
-                    Text("Ville personnalisée")
-                }
-            }
-            .searchable(text: $searchText)
-            .navigationTitle("Choisir une ville")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
             }
         }
-    }
-
-    private func useCurrentLocation() {
-        locationErrorMessage = nil
-        isLocating = true
-        viewModel.locationAndCompass.requestAuthorization()
-        viewModel.locationAndCompass.start()
-
-        geocodingTask?.cancel()
-        geocodingTask = Task {
-            let locationStream = viewModel.locationAndCompass.$currentLocation.values
-
-            let result: CLLocation? = await withTaskGroup(of: CLLocation??.self) { group in
-                group.addTask {
-                    for await location in locationStream {
-                        if let location { return location }
-                    }
-                    return nil
-                }
-                group.addTask {
-                    try? await Task.sleep(nanoseconds: 8_000_000_000)
-                    return .some(nil)
-                }
-                let first = await group.next() ?? nil
-                group.cancelAll()
-                return first ?? nil
-            }
-
-            guard !Task.isCancelled else { return }
-
-            if let result {
-                await viewModel.reverseGeocodeLocation(result)
-                await MainActor.run {
-                    self.isLocating = false
-                    self.dismiss()
-                }
-            } else {
-                await MainActor.run {
-                    self.isLocating = false
-                    self.locationErrorMessage = viewModel.locationAndCompass.lastErrorMessage
-                        ?? "Impossible d'obtenir la position à temps. Vérifie que la localisation est autorisée dans Réglages."
-                }
-            }
-        }
-    }
-
-    private func addCustomCity() {
-        guard !customName.isEmpty,
-              let lat = Double(customLatitude.replacingOccurrences(of: ",", with: ".")),
-              let lon = Double(customLongitude.replacingOccurrences(of: ",", with: ".")) else {
-            locationErrorMessage = "Nom, latitude et longitude doivent être valides."
-            return
-        }
-        let tzIdentifier = customTimeZone.trimmingCharacters(in: .whitespaces)
-        guard TimeZone(identifier: tzIdentifier) != nil else {
-            locationErrorMessage = "Fuseau horaire invalide (ex. attendu : Europe/Paris, Africa/Algiers)."
-            return
-        }
-        let preset = CityPreset(name: customName, country: "Personnalisée", latitude: lat, longitude: lon, timeZoneIdentifier: tzIdentifier)
-        viewModel.customCities.append(preset)
-        viewModel.saveCustomCities()
-        viewModel.settings.selectedCity = preset
-        dismiss()
     }
 }
 
-// MARK: QiblaSheet (version optimisée avec repère Nord fixe et lissage)
-
-// MARK: - QiblaSheet (Design Haute Précision Style Claude — Identique à la capture App Store)
+// MARK: QiblaSheet
 
 struct QiblaSheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
 
-    @State private var heading: Double = 0.0
-
-    private var bearing: Double {
-        let lat = viewModel.locationAndCompass.currentLocation?.coordinate.latitude ?? viewModel.settings.selectedCity.latitude
-        let lon = viewModel.locationAndCompass.currentLocation?.coordinate.longitude ?? viewModel.settings.selectedCity.longitude
-        return AstronomicalPrayerCalculator.qiblaBearing(fromLat: lat, lon: lon)
-    }
-
-    private var distance: Double {
-        let lat = viewModel.locationAndCompass.currentLocation?.coordinate.latitude ?? viewModel.settings.selectedCity.latitude
-        let lon = viewModel.locationAndCompass.currentLocation?.coordinate.longitude ?? viewModel.settings.selectedCity.longitude
-        return AstronomicalPrayerCalculator.distanceToMecca(fromLat: lat, lon: lon)
-    }
-
-    private var isAligned: Bool {
-        let raw = abs(bearing - heading).truncatingRemainder(dividingBy: 360)
-        let deviation = raw > 180 ? 360 - raw : raw
-        return deviation < 2.5
-    }
-
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Header discret d'informations géographiques
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(viewModel.settings.selectedCity.name.uppercased())
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .tracking(1.5)
-                            .foregroundStyle(.secondary)
-                        Text("Boussole Qibla")
-                            .font(.system(size: 22, weight: .semibold, design: .serif))
-                            .foregroundStyle(.primary)
-                    }
-                    Spacer()
-                    // Badge d'alignement minimaliste
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(isAligned ? Color(red: 0.1, green: 0.7, blue: 0.4) : Color.secondary.opacity(0.4))
-                            .frame(width: 8, height: 8)
-                        Text(isAligned ? "ALIGNÉ" : "\(Int(bearing))° N")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
-                            .foregroundStyle(isAligned ? .primary : .secondary)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(RoundedRectangle(cornerRadius: 20).fill(Color(.secondarySystemGroupedBackground)))
-                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.primary.opacity(0.08), lineWidth: 1))
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
+            VStack(spacing: 24) {
+                let lat = viewModel.locationAndCompass.currentLocation?.coordinate.latitude ?? viewModel.settings.selectedCity.latitude
+                let lon = viewModel.locationAndCompass.currentLocation?.coordinate.longitude ?? viewModel.settings.selectedCity.longitude
+                let qiblaBearing = AstronomicalPrayerCalculator.qiblaBearing(fromLat: lat, lon: lon)
+                let distance = AstronomicalPrayerCalculator.distanceToMecca(fromLat: lat, lon: lon)
+                let currentHeading = viewModel.locationAndCompass.smoothedHeadingDegrees
+                let needleAngle = qiblaBearing - currentHeading
 
-                Spacer(minLength: 20)
+                Spacer()
 
-                // Cadran central haute fidélité (Style Claude / Image App Store)
                 ZStack {
-                    // 1. Disque de fond doux et ombre portée subtile
                     Circle()
-                        .fill(Color(.secondarySystemGroupedBackground))
-                        .frame(width: 290, height: 290)
-                        .shadow(color: Color.black.opacity(0.04), radius: 15, x: 0, y: 8)
-
-                    // 2. Double anneau extérieur de graduation
-                    Circle()
-                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-                        .frame(width: 270, height: 270)
+                        .stroke(Color.adhanPrimary.opacity(0.2), lineWidth: 12)
+                        .frame(width: 260, height: 260)
 
                     Circle()
-                        .stroke(isAligned ? Color.primary.opacity(0.8) : Color.primary.opacity(0.18), lineWidth: isAligned ? 2 : 1)
+                        .fill(Color.cardBackground)
                         .frame(width: 240, height: 240)
+                        .shadow(radius: 4)
 
-                    // 3. Repère supérieur fixe de visée (axe 12h du téléphone)
                     VStack {
-                        Rectangle()
-                            .fill(Color.primary.opacity(0.85))
-                            .frame(width: 2, height: 14)
+                        Text("N")
+                            .font(.headline.bold())
+                            .foregroundStyle(.red)
                         Spacer()
                     }
-                    .frame(height: 290)
+                    .frame(height: 220)
+                    .rotationEffect(.degrees(-currentHeading))
 
-                    // 4. Cadran rotatif magnétique (Graduations de précision + Points cardinaux + NORD ROUGE)
-                    ZStack {
-                        // 72 graduations fines (tous les 5 degrés)
-                        ForEach(0..<72) { index in
-                            let isMajor = index % 6 == 0 // Tous les 30°
-                            let isNorth = index == 0
-                            VStack {
-                                Rectangle()
-                                    .fill(isNorth ? Color.red : (isMajor ? Color.primary.opacity(0.6) : Color.primary.opacity(0.18)))
-                                    .frame(width: isMajor ? 1.8 : 0.8, height: isMajor ? 9 : 4.5)
-                                Spacer()
-                            }
-                            .frame(height: 270)
-                            .rotationEffect(.degrees(Double(index) * 5))
-                        }
-
-                        // Repère Nord Rouge élégant (style boussole Apple / Claude)
-                        VStack(spacing: 2) {
-                            Image(systemName: "triangle.fill")
-                                .font(.system(size: 8, weight: .bold))
-                                .foregroundStyle(Color.red)
-                            Text("N")
-                                .font(.system(size: 13, weight: .heavy, design: .monospaced))
-                                .foregroundStyle(Color.red)
-                        }
-                        .offset(y: -98)
-
-                        // Autres points cardinaux (typographie suisse anthracite)
-                        Text("E").font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(.secondary).offset(x: 98)
-                        Text("S").font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(.secondary).offset(y: 98)
-                        Text("O").font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(.secondary).offset(x: -98)
-                    }
-                    .rotationEffect(.degrees(-heading))
-                    .animation(.linear(duration: 0.08), value: heading)
-
-                    // 5. Flèche de visée Qibla (Pointe vers la Mecque avec anneau central)
-                    ZStack {
-                        // Ligne fine directrice
-                        VStack {
-                            Image(systemName: "location.north.fill")
-                                .font(.system(size: 32, weight: .semibold))
-                                .foregroundStyle(isAligned ? Color.primary : Color.adhanPrimary)
-                                .shadow(color: isAligned ? Color.black.opacity(0.15) : Color.clear, radius: 4, y: 2)
-                            Spacer()
-                        }
-                        .frame(height: 200)
-
-                        // Disque central
-                        Circle()
-                            .fill(Color(.secondarySystemGroupedBackground))
-                            .frame(width: 18, height: 18)
-                            .overlay(Circle().stroke(Color.primary.opacity(0.2), lineWidth: 1.5))
-
-                        Circle()
-                            .fill(isAligned ? Color.primary : Color.adhanPrimary)
-                            .frame(width: 6, height: 6)
-                    }
-                    .rotationEffect(.degrees(bearing - heading))
-                    .animation(.linear(duration: 0.08), value: heading)
-                    .scaleEffect(isAligned ? 1.05 : 1.0)
-                    .animation(.spring(response: 0.3), value: isAligned)
-                }
-                .sensoryFeedback(.success, trigger: isAligned) { old, new in
-                    !old && new
+                    Image(systemName: "location.north.line.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80)
+                        .foregroundStyle(Color.adhanGold)
+                        .rotationEffect(.degrees(needleAngle))
                 }
 
-                Spacer(minLength: 20)
-
-                // 6. Bloc de métriques épuré (Distance, Cap, et Angle de direction)
-                VStack(spacing: 12) {
-                    HStack(spacing: 24) {
-                        metricItem(title: "CAP ACTUEL", value: "\(Int(heading))°")
-                        Divider().frame(height: 28)
-                        metricItem(title: "DIRECTION", value: "\(Int(bearing))°")
-                        Divider().frame(height: 28)
-                        metricItem(title: "DISTANCE", value: "\(Int(distance)) km")
-                    }
-                    .padding(.vertical, 14)
-                    .padding(.horizontal, 20)
-                    .background(RoundedRectangle(cornerRadius: 18).fill(Color(.secondarySystemGroupedBackground)))
-                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.primary.opacity(0.06), lineWidth: 1))
-
-                    if viewModel.locationAndCompass.headingAccuracy > 20 {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.triangle.2.circlepath")
-                            Text("Bougez l'iPhone en forme de 8 pour calibrer")
-                        }
-                        .font(.caption2)
+                VStack(spacing: 8) {
+                    Text("Cap Qibla : \(Int(qiblaBearing))°")
+                        .font(.title2.bold())
+                    Text("Distance de La Mecque : \(Int(distance)) km")
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    }
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
+
+                Spacer()
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationBarTitleDisplayMode(.inline)
+            .padding()
+            .background(Color.appBackground)
+            .navigationTitle("Direction de la Qibla")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Fermer") { dismiss() }
-                        .font(.system(size: 15, weight: .medium))
                 }
             }
-            .onAppear {
-                viewModel.locationAndCompass.requestAuthorization()
-                viewModel.locationAndCompass.start()
-                heading = viewModel.locationAndCompass.smoothedHeadingDegrees
-            }
+            .onAppear { viewModel.locationAndCompass.start() }
             .onDisappear {
                 if !viewModel.settings.followCurrentLocation {
                     viewModel.locationAndCompass.stop()
                 }
             }
-            .onReceive(viewModel.locationAndCompass.$smoothedHeadingDegrees) { newHeading in
-                heading = newHeading
-            }
         }
-    }
-
-    private func metricItem(title: String, value: String) -> some View {
-        VStack(spacing: 3) {
-            Text(title)
-                .font(.system(size: 9, weight: .bold, design: .monospaced))
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(size: 16, weight: .bold, design: .monospaced))
-                .foregroundStyle(.primary)
-        }
-    }
-}
-
-// MARK: SunnaSheet
-
-struct SunnaSheet: View {
-    @ObservedObject var viewModel: PrayerViewModel
-    @Environment(\.dismiss) private var dismiss
-    @State private var showNawafilEditor = false
-    @State private var showFastingEditor = false
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text(viewModel.fastingToday.rawValue)
-                        .font(.headline)
-                        .foregroundStyle(Color.softAlert)
-                } header: {
-                    Text("Statut du jour")
-                }
-
-                Section {
-                    if viewModel.nawafilReminders.isEmpty {
-                        Text("Aucun rappel Nawafil configuré.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.nawafilReminders) { reminder in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(reminder.title).font(.body.weight(.medium))
-                                    Text(reminder.time, style: .time).font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Toggle("", isOn: nawafilQuickToggle(id: reminder.id))
-                                    .labelsHidden()
-                            }
-                        }
-                    }
-                    Button {
-                        showNawafilEditor = true
-                    } label: {
-                        Label("Gérer les Nawafil", systemImage: "slider.horizontal.3")
-                    }
-                } header: {
-                    Text("Prières surérogatoires")
-                }
-
-                Section {
-                    if viewModel.fastingReminders.isEmpty {
-                        Text("Aucun rappel de jeûne configuré.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.fastingReminders) { reminder in
-                            HStack {
-                                Text(reminder.eventTitle.isEmpty ? reminder.category.rawValue : reminder.eventTitle)
-                                Spacer()
-                                Toggle("", isOn: fastingQuickToggle(id: reminder.id))
-                                    .labelsHidden()
-                            }
-                        }
-                    }
-                    Button {
-                        showFastingEditor = true
-                    } label: {
-                        Label("Gérer le suivi du jeûne", systemImage: "slider.horizontal.3")
-                    }
-                } header: {
-                    Text("Jeûnes suivis")
-                }
-            }
-            .navigationTitle("Sunna")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
-            }
-            .sheet(isPresented: $showNawafilEditor) { NawafilSheet(viewModel: viewModel) }
-            .sheet(isPresented: $showFastingEditor) { FastingSheet(viewModel: viewModel) }
-        }
-    }
-
-    private func nawafilQuickToggle(id: UUID) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { viewModel.nawafilReminders.first(where: { $0.id == id })?.isEnabled ?? false },
-            set: { newValue in
-                guard let index = viewModel.nawafilReminders.firstIndex(where: { $0.id == id }) else { return }
-                viewModel.nawafilReminders[index].isEnabled = newValue
-                viewModel.saveNawafil()
-            }
-        )
-    }
-
-    private func fastingQuickToggle(id: UUID) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { viewModel.fastingReminders.first(where: { $0.id == id })?.isEnabled ?? false },
-            set: { newValue in
-                guard let index = viewModel.fastingReminders.firstIndex(where: { $0.id == id }) else { return }
-                viewModel.fastingReminders[index].isEnabled = newValue
-                viewModel.saveFastingReminders()
-            }
-        )
     }
 }
 
@@ -3082,114 +2739,64 @@ struct SunnaSheet: View {
 struct FastingSheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var newCategory: FastingCategory = .mondayThursday
-    @State private var newMinutesBefore: Int = 60
-    @State private var newEventTitle: String = ""
-    @State private var newSoundType: ReminderSoundType = .defaultSound
-    @State private var newCustomSoundTrackID: UUID? = nil
+    @State private var showAddAlert = false
+    @State private var selectedCategory: FastingCategory = .mondayThursday
+    @State private var minutesBefore: Int = 60
+    @State private var title: String = ""
 
     var body: some View {
         NavigationStack {
             List {
-                Section("Statut du jour") {
-                    Text(viewModel.fastingToday.rawValue)
+                Section("Aujourd'hui") {
+                    LabeledContent("Statut", value: viewModel.fastingToday.rawValue)
                 }
 
-                Section("Ajouter un rappel") {
-                    Picker("Catégorie", selection: $newCategory) {
-                        ForEach(FastingCategory.allCases.filter { $0 != .none }) { category in
-                            Text(category.rawValue).tag(category)
-                        }
+                Section("Rappels programmés") {
+                    ForEach($viewModel.fastingReminders) { $reminder in
+                        Toggle(reminder.eventTitle.isEmpty ? reminder.category.rawValue : reminder.eventTitle, isOn: $reminder.isEnabled)
+                            .onChange(of: reminder.isEnabled) { _ in viewModel.saveFastingReminders() }
                     }
-                    TextField("Nom de l'événement (ex: Achoura)", text: $newEventTitle)
-                    Picker("Mode de sonnerie", selection: $newSoundType) {
-                        ForEach(ReminderSoundType.allCases) { sound in
-                            Text(sound.rawValue).tag(sound)
-                        }
-                    }
-                    Picker("Son personnalisé", selection: $newCustomSoundTrackID) {
-                        Text("Aucun (utiliser le mode ci-dessus)").tag(UUID?.none)
-                        ForEach(viewModel.audioManager.library.filter { $0.isBuiltIn }) { track in
-                            Text(track.displayName).tag(Optional(track.id))
-                        }
-                    }
-                    Stepper("Rappel \(newMinutesBefore) min avant Imsak", value: $newMinutesBefore, in: 15...180, step: 15)
-                    Button("Ajouter") {
-                        viewModel.fastingReminders.append(
-                            FastingReminder(category: newCategory, reminderMinutesBeforeImsak: newMinutesBefore, eventTitle: newEventTitle, soundType: newSoundType, customSoundTrackID: newCustomSoundTrackID)
-                        )
+                    .onDelete { indexSet in
+                        viewModel.fastingReminders.remove(atOffsets: indexSet)
                         viewModel.saveFastingReminders()
-                        newEventTitle = ""
-                        newCustomSoundTrackID = nil
                     }
-                }
-
-                Section {
-                    if viewModel.fastingReminders.isEmpty {
-                        Text("Aucun rappel pour l'instant.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.fastingReminders) { reminder in
-                            let binding = fastingBinding(id: reminder.id)
-                            VStack(alignment: .leading, spacing: 8) {
-                                Picker("Catégorie", selection: binding.category) {
-                                    ForEach(FastingCategory.allCases.filter { $0 != .none }) { category in
-                                        Text(category.rawValue).tag(category)
-                                    }
-                                }
-                                TextField("Nom de l'événement", text: binding.eventTitle)
-                                Picker("Mode de sonnerie", selection: binding.soundType) {
-                                    ForEach(ReminderSoundType.allCases) { sound in
-                                        Text(sound.rawValue).tag(sound)
-                                    }
-                                }
-                                Picker("Son personnalisé", selection: binding.customSoundTrackID) {
-                                    Text("Aucun (utiliser le mode ci-dessus)").tag(UUID?.none)
-                                    ForEach(viewModel.audioManager.library.filter { $0.isBuiltIn }) { track in
-                                        Text(track.displayName).tag(Optional(track.id))
-                                    }
-                                }
-                                Stepper("Rappel \(binding.reminderMinutesBeforeImsak.wrappedValue) min avant Imsak",
-                                        value: binding.reminderMinutesBeforeImsak, in: 15...180, step: 15)
-                                Toggle("Activé", isOn: binding.isEnabled)
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .onDelete { indexSet in
-                            viewModel.fastingReminders.remove(atOffsets: indexSet)
-                            viewModel.saveFastingReminders()
-                        }
-                    }
-                } header: {
-                    Text("Rappels configurés")
-                } footer: {
-                    Text("Le son personnalisé ne fonctionne que pour les pistes intégrées au projet Xcode (Bundle) : iOS interdit d'utiliser un fichier importé comme son de notification.")
                 }
             }
-            .navigationTitle("Suivi du jeûne")
+            .navigationTitle("Suivi du Jeûne")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
                 ToolbarItem(placement: .topBarLeading) {
-                    EditButton()
+                    Button { showAddAlert = true } label: { Image(systemName: "plus") }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("OK") { dismiss() }
+                }
+            }
+            .sheet(isPresented: $showAddAlert) {
+                NavigationStack {
+                    Form {
+                        Picker("Type de jeûne", selection: $selectedCategory) {
+                            ForEach(FastingCategory.allCases.filter { $0 != .none }) { cat in
+                                Text(cat.rawValue).tag(cat)
+                            }
+                        }
+                        TextField("Titre du rappel (optionnel)", text: $title)
+                        Stepper("Rappel avant Imsak : \(minutesBefore) min", value: $minutesBefore, in: 15...120, step: 15)
+                    }
+                    .navigationTitle("Nouveau rappel")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) { Button("Annuler") { showAddAlert = false } }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Ajouter") {
+                                let reminder = FastingReminder(category: selectedCategory, isEnabled: true, reminderMinutesBeforeImsak: minutesBefore, eventTitle: title)
+                                viewModel.fastingReminders.append(reminder)
+                                viewModel.saveFastingReminders()
+                                showAddAlert = false
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
-
-    private func fastingBinding(id: UUID) -> Binding<FastingReminder> {
-        Binding<FastingReminder>(
-            get: {
-                viewModel.fastingReminders.first(where: { $0.id == id })
-                    ?? FastingReminder(category: .mondayThursday)
-            },
-            set: { newValue in
-                guard let index = viewModel.fastingReminders.firstIndex(where: { $0.id == id }) else { return }
-                viewModel.fastingReminders[index] = newValue
-                viewModel.saveFastingReminders()
-            }
-        )
     }
 }
 
@@ -3198,103 +2805,62 @@ struct FastingSheet: View {
 struct NawafilSheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var newTitle = ""
-    @State private var newTime = Date()
-    @State private var newNote = ""
-    @State private var newWeekdays: Set<Int> = Set(1...7)
-
-    private let weekdayLabels = ["", "Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
+    @State private var showAdd = false
+    @State private var title = ""
+    @State private var time = Date()
+    @State private var note = ""
 
     var body: some View {
         NavigationStack {
             List {
-                Section("Ajouter un rappel Nawafil") {
-                    TextField("Titre (ex: Doha, Tahajjud)", text: $newTitle)
-                    DatePicker("Heure", selection: $newTime, displayedComponents: .hourAndMinute)
-                    TextField("Note (optionnel)", text: $newNote)
-                    weekdaySelector(selection: $newWeekdays)
-                    Button("Ajouter") {
-                        guard !newTitle.isEmpty else { return }
-                        viewModel.nawafilReminders.append(
-                            NawafilReminder(title: newTitle, time: newTime, repeatingWeekdays: newWeekdays, note: newNote)
-                        )
-                        viewModel.saveNawafil()
-                        newTitle = ""
-                        newNote = ""
-                        newWeekdays = Set(1...7)
+                ForEach($viewModel.nawafilReminders) { $item in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(item.title).font(.headline)
+                            Text(item.time, style: .time).font(.subheadline).foregroundStyle(.secondary)
+                            if !item.note.isEmpty { Text(item.note).font(.caption).foregroundStyle(.secondary) }
+                        }
+                        Spacer()
+                        Toggle("", isOn: $item.isEnabled)
+                            .onChange(of: item.isEnabled) { _ in viewModel.saveNawafil() }
                     }
                 }
-
-                Section("Rappels existants") {
-                    if viewModel.nawafilReminders.isEmpty {
-                        Text("Aucun rappel pour l'instant.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.nawafilReminders) { reminder in
-                            let binding = nawafilBinding(id: reminder.id)
-                            VStack(alignment: .leading, spacing: 8) {
-                                TextField("Titre", text: binding.title)
-                                    .font(.body.weight(.medium))
-                                DatePicker("Heure", selection: binding.time, displayedComponents: .hourAndMinute)
-                                TextField("Note", text: binding.note)
-                                    .font(.caption)
-                                weekdaySelector(selection: binding.repeatingWeekdays)
-                                Toggle("Activé", isOn: binding.isEnabled)
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .onDelete { indexSet in
-                            viewModel.nawafilReminders.remove(atOffsets: indexSet)
-                            viewModel.saveNawafil()
-                        }
-                    }
+                .onDelete { indexSet in
+                    viewModel.nawafilReminders.remove(atOffsets: indexSet)
+                    viewModel.saveNawafil()
                 }
             }
-            .navigationTitle("Nawafil")
+            .navigationTitle("Prières Nawafil")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
                 ToolbarItem(placement: .topBarLeading) {
-                    EditButton()
+                    Button { showAdd = true } label: { Image(systemName: "plus") }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("OK") { dismiss() }
                 }
             }
-        }
-    }
-
-    private func nawafilBinding(id: UUID) -> Binding<NawafilReminder> {
-        Binding<NawafilReminder>(
-            get: {
-                viewModel.nawafilReminders.first(where: { $0.id == id })
-                    ?? NawafilReminder(title: "", time: Date())
-            },
-            set: { newValue in
-                guard let index = viewModel.nawafilReminders.firstIndex(where: { $0.id == id }) else { return }
-                viewModel.nawafilReminders[index] = newValue
-                viewModel.saveNawafil()
-            }
-        )
-    }
-
-    private func weekdaySelector(selection: Binding<Set<Int>>) -> some View {
-        HStack(spacing: 4) {
-            ForEach(1...7, id: \.self) { day in
-                let isSelected = selection.wrappedValue.contains(day)
-                Button {
-                    if isSelected {
-                        selection.wrappedValue.remove(day)
-                    } else {
-                        selection.wrappedValue.insert(day)
+            .sheet(isPresented: $showAdd) {
+                NavigationStack {
+                    Form {
+                        TextField("Nom (ex: Duha, Tahajjud)", text: $title)
+                        DatePicker("Heure", selection: $time, displayedComponents: .hourAndMinute)
+                        TextField("Note / Invocation (optionnel)", text: $note)
                     }
-                } label: {
-                    Text(weekdayLabels[day])
-                        .font(.caption2.weight(.semibold))
-                        .frame(width: 34, height: 28)
-                        .background(isSelected ? Color.adhanPrimary : Color.cardBackground)
-                        .foregroundStyle(isSelected ? .white : .secondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .navigationTitle("Ajouter Nafla")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) { Button("Annuler") { showAdd = false } }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Ajouter") {
+                                if !title.isEmpty {
+                                    let item = NawafilReminder(title: title, time: time, isEnabled: true, note: note)
+                                    viewModel.nawafilReminders.append(item)
+                                    viewModel.saveNawafil()
+                                    showAdd = false
+                                }
+                            }
+                        }
+                    }
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -3305,72 +2871,150 @@ struct NawafilSheet: View {
 struct MemoSheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var newTitle = ""
-    @State private var newContent = ""
+    @State private var showAdd = false
+    @State private var title = ""
+    @State private var content = ""
 
     var body: some View {
         NavigationStack {
             List {
-                Section("Nouveau mémo") {
-                    TextField("Titre", text: $newTitle)
-                    TextField("Contenu", text: $newContent, axis: .vertical)
-                    Button("Enregistrer") {
-                        guard !newTitle.isEmpty else { return }
-                        viewModel.memos.append(MemoNote(title: newTitle, content: newContent))
-                        viewModel.saveMemos()
-                        newTitle = ""
-                        newContent = ""
+                ForEach(viewModel.memos) { memo in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(memo.title).font(.headline)
+                        Text(memo.content).font(.body)
+                        Text(memo.createdAt, style: .date).font(.caption2).foregroundStyle(.secondary)
                     }
                 }
-                Section("Mes mémos") {
-                    if viewModel.memos.isEmpty {
-                        Text("Aucun mémo pour l'instant.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.memos) { memo in
-                            let binding = memoBinding(id: memo.id)
-                            VStack(alignment: .leading, spacing: 6) {
-                                TextField("Titre", text: binding.title)
-                                    .font(.body.weight(.medium))
-                                TextField("Contenu", text: binding.content, axis: .vertical)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text(memo.createdAt, style: .date)
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .onDelete { indexSet in
-                            viewModel.memos.remove(atOffsets: indexSet)
-                            viewModel.saveMemos()
-                        }
-                    }
+                .onDelete { indexSet in
+                    viewModel.memos.remove(atOffsets: indexSet)
+                    viewModel.saveMemos()
                 }
             }
-            .navigationTitle("Mémos")
+            .navigationTitle("Mémos Spirituels")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
                 ToolbarItem(placement: .topBarLeading) {
-                    EditButton()
+                    Button { showAdd = true } label: { Image(systemName: "plus") }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("OK") { dismiss() }
+                }
+            }
+            .sheet(isPresented: $showAdd) {
+                NavigationStack {
+                    Form {
+                        TextField("Titre", text: $title)
+                        TextEditor(text: $content).frame(height: 120)
+                    }
+                    .navigationTitle("Nouveau mémo")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) { Button("Annuler") { showAdd = false } }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Enregistrer") {
+                                if !title.isEmpty {
+                                    let memo = MemoNote(title: title, content: content)
+                                    viewModel.memos.append(memo)
+                                    viewModel.saveMemos()
+                                    showAdd = false
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
+}
 
-    private func memoBinding(id: UUID) -> Binding<MemoNote> {
-        Binding<MemoNote>(
-            get: {
-                viewModel.memos.first(where: { $0.id == id }) ?? MemoNote(title: "", content: "")
-            },
-            set: { newValue in
-                guard let index = viewModel.memos.firstIndex(where: { $0.id == id }) else { return }
-                viewModel.memos[index] = newValue
-                viewModel.saveMemos()
+// MARK: DuaaSheet
+
+struct DuaaSheet: View {
+    @ObservedObject var viewModel: PrayerViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var showAdd = false
+    @State private var title = ""
+    @State private var content = ""
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(viewModel.personalDuaas) { duaa in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(duaa.title).font(.headline).foregroundStyle(Color.adhanPrimary)
+                        Text(duaa.content).font(.body)
+                    }
+                }
+                .onDelete { indexSet in
+                    viewModel.personalDuaas.remove(atOffsets: indexSet)
+                    viewModel.savePersonalDuaas()
+                }
             }
-        )
+            .navigationTitle("Mes Douaas")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showAdd = true } label: { Image(systemName: "plus") }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("OK") { dismiss() }
+                }
+            }
+            .sheet(isPresented: $showAdd) {
+                NavigationStack {
+                    Form {
+                        TextField("Sujet / Occasion", text: $title)
+                        TextEditor(text: $content).frame(height: 120)
+                    }
+                    .navigationTitle("Nouvelle Douaa")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) { Button("Annuler") { showAdd = false } }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Enregistrer") {
+                                if !title.isEmpty {
+                                    let item = MemoNote(title: title, content: content)
+                                    viewModel.personalDuaas.append(item)
+                                    viewModel.savePersonalDuaas()
+                                    showAdd = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: SunnaSheet
+
+struct SunnaSheet: View {
+    @ObservedObject var viewModel: PrayerViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    let sunnanList = [
+        ("Siwak", "Utiliser le Siwak avant chaque prière et après le réveil."),
+        ("Prières Rawatib", "12 rak'ats surérogatoires quotidiennes liées aux prières obligatoires."),
+        ("Lecture de Sourate Al-Kahf", "Le vendredi, illumination entre les deux vendredis."),
+        ("Invocations du matin et du soir", "Protection et rappel quotidien (Adhkar)."),
+        ("Prière du Duha", "2 à 8 rak'ats au cours de la matinée.")
+    ]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(sunnanList, id: \.0) { item in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.0).font(.headline).foregroundStyle(Color.adhanPrimary)
+                        Text(item.1).font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .navigationTitle("Sunnan Récompensées")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("OK") { dismiss() }
+                }
+            }
+        }
     }
 }
 
@@ -3380,139 +3024,40 @@ struct ImportantDatesSheet: View {
     @ObservedObject var viewModel: PrayerViewModel
     @Environment(\.dismiss) private var dismiss
 
-    private var sortedEvents: [(event: IslamicEvent, date: Date)] {
-        IslamicEvent.all
-            .compactMap { event -> (IslamicEvent, Date)? in
-                guard let date = event.nextOccurrence() else { return nil }
-                return (event, date)
-            }
-            .sorted { $0.1 < $1.1 }
-    }
-
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    Text("Dates estimées d'après le calendrier Oum Al-Qura. L'observation de la lune peut décaler certaines dates de ±1 jour selon les pays.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Section {
-                    ForEach(sortedEvents, id: \.event.id) { item in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.event.name).font(.body.weight(.medium))
-                                Text(item.date, style: .date).font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            let daysRemaining = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: item.date).day ?? 0
-                            Text(daysRemaining == 0 ? "Aujourd'hui" : "J-\(daysRemaining)")
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(daysRemaining == 0 ? Color.adhanGold : Color.adhanPrimary)
-                            Toggle("", isOn: eventReminderBinding(for: item.event.name))
-                                .labelsHidden()
-                        }
-                    }
-                } header: {
-                    Text("Prochaines dates")
-                } footer: {
-                    Text("Active le rappel pour recevoir une notification le jour même, à 9h.")
-                }
-            }
-            .navigationTitle("Dates clés")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
-            }
-        }
-    }
-
-    private func eventReminderBinding(for eventName: String) -> Binding<Bool> {
-        Binding<Bool>(
-            get: { viewModel.settings.enabledIslamicEventReminders[eventName] ?? false },
-            set: { newValue in
-                viewModel.settings.enabledIslamicEventReminders[eventName] = newValue
-                if newValue, let event = IslamicEvent.all.first(where: { $0.name == eventName }) {
-                    viewModel.scheduleIslamicEventReminder(for: event)
-                } else if let event = IslamicEvent.all.first(where: { $0.name == eventName }) {
-                    viewModel.cancelIslamicEventReminder(for: event)
-                }
-            }
-        )
-    }
-}
-
-// MARK: DuaaSheet
-
-struct DuaaSheet: View {
-    @ObservedObject var viewModel: PrayerViewModel
-    @Environment(\.dismiss) private var dismiss
-    @State private var newTitle = ""
-    @State private var newContent = ""
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text("Cet espace te permet d'enregistrer tes propres douaas (texte que tu saisis toi-même). Aucun contenu religieux n'est généré automatiquement ici.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Section("Ajouter une douaa") {
-                    TextField("Titre (ex: Douaa du matin)", text: $newTitle)
-                    TextField("Texte", text: $newContent, axis: .vertical)
-                    Button("Enregistrer") {
-                        guard !newTitle.isEmpty else { return }
-                        viewModel.personalDuaas.append(MemoNote(title: newTitle, content: newContent))
-                        viewModel.savePersonalDuaas()
-                        newTitle = ""
-                        newContent = ""
-                    }
-                }
-                Section("Mes douaas") {
-                    if viewModel.personalDuaas.isEmpty {
-                        Text("Aucune douaa enregistrée pour l'instant.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(viewModel.personalDuaas) { duaa in
-                            let binding = duaaBinding(id: duaa.id)
-                            VStack(alignment: .leading, spacing: 6) {
-                                TextField("Titre", text: binding.title)
-                                    .font(.body.weight(.medium))
-                                TextField("Texte", text: binding.content, axis: .vertical)
+                ForEach(IslamicEvent.all) { event in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(event.name).font(.headline)
+                            if let date = event.nextOccurrence() {
+                                Text("Prochaine date : \(date.formatted(date: .long, time: .omitted))")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
-                            .padding(.vertical, 4)
                         }
-                        .onDelete { indexSet in
-                            viewModel.personalDuaas.remove(atOffsets: indexSet)
-                            viewModel.savePersonalDuaas()
-                        }
+                        Spacer()
+                        Toggle("", isOn: Binding(
+                            get: { viewModel.settings.enabledIslamicEventReminders[event.name, default: false] },
+                            set: { newValue in
+                                viewModel.settings.enabledIslamicEventReminders[event.name] = newValue
+                                if newValue {
+                                    viewModel.scheduleIslamicEventReminder(for: event)
+                                } else {
+                                    viewModel.cancelIslamicEventReminder(for: event)
+                                }
+                            }
+                        ))
                     }
                 }
             }
-            .navigationTitle("Douaas")
+            .navigationTitle("Événements Hégiriens")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fermer") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    EditButton()
+                    Button("OK") { dismiss() }
                 }
             }
         }
-    }
-
-    private func duaaBinding(id: UUID) -> Binding<MemoNote> {
-        Binding<MemoNote>(
-            get: { viewModel.personalDuaas.first(where: { $0.id == id }) ?? MemoNote(title: "", content: "") },
-            set: { newValue in
-                guard let index = viewModel.personalDuaas.firstIndex(where: { $0.id == id }) else { return }
-                viewModel.personalDuaas[index] = newValue
-                viewModel.savePersonalDuaas()
-            }
-        )
     }
 }
